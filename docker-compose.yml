@@ -1,0 +1,160 @@
+# =============================================================================
+# 基于后量子混合密码的端到端加密即时通讯系统 —— 开发/部署基础设施编排
+#
+# 用法:
+#   1) 复制 .env.example 为 .env 并按需修改
+#   2) 一键拉起全栈(含后端):   docker compose up -d --build
+#      或仅拉起基础设施(本地 go run 后端时用):
+#                               docker compose up -d postgres redis minio minio-init
+#
+# 服务:
+#   postgres   账号/关系/群组/预密钥/离线密文
+#   redis      在线状态/路由/发布订阅/限流计数
+#   minio      加密媒体对象(只存密文)
+#   minio-init 初始化 bucket(一次性任务)
+#   server     Go 后端(认证/密钥分发/消息中继/媒体签发/管理 API)
+# =============================================================================
+
+name: pqchat
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pqchat}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 中设置 POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-pqchat}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pqchat} -d ${POSTGRES_DB:-pqchat}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?请在 .env 中设置 MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?请在 .env 中设置 MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - miniodata:/data
+    # 说明:minio/minio 服务镜像未内置 mc 客户端,无法用 mc 做 healthcheck;
+    # MinIO 启动很快,这里依赖 minio-init 完成 bucket 初始化,后端连接也带重试。
+
+  # 一次性任务:等待 MinIO 就绪后创建 bucket
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-pqchat-media}
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do echo '等待 MinIO 就绪...'; sleep 2; done;
+      mc mb --ignore-existing local/$${MINIO_BUCKET};
+      echo 'MinIO bucket 已就绪: '$${MINIO_BUCKET};
+      exit 0;
+      "
+
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_NAME: ${APP_NAME:-基于后量子混合密码的端到端加密即时通讯系统}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      HTTP_ADDR: ":8080"
+      RUN_MIGRATIONS: "true"
+      # 容器内连接同一 compose 网络的服务名
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-pqchat}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-pqchat}
+      POSTGRES_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_DB: "0"
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-pqchat-media}
+      MINIO_USE_SSL: "false"
+      JWT_SECRET: ${JWT_SECRET:-dev_change_me}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-720h}
+      # 允许管理后台容器(同源经其 nginx 转发)及本地开发跨域
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+      # 邮箱验证码 SMTP(未配置则后端把验证码打到日志,便于离线/开发演示)
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USE_SSL: ${SMTP_USE_SSL:-true}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-基于后量子混合密码的端到端加密即时通讯系统}
+      VERIFICATION_CODE_TTL: ${VERIFICATION_CODE_TTL:-10m}
+      VERIFICATION_SEND_INTERVAL: ${VERIFICATION_SEND_INTERVAL:-60s}
+      VERIFICATION_MAX_ATTEMPTS: ${VERIFICATION_MAX_ATTEMPTS:-5}
+      # 管理后台初始账号(启动时若不存在则按此播种 superadmin)
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?请在 .env 中设置 ADMIN_PASSWORD}
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+
+  # 管理后台静态站(nginx 提供 SPA 并把 /api/ 反代到 server)
+  admin:
+    build:
+      context: ./apps/admin
+      dockerfile: Dockerfile
+      args:
+        # 同源:留空,由 admin 容器内 nginx 把 /api/ 转发到 server
+        VITE_API_BASE_URL: ""
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "${ADMIN_PORT:-5174}:80"
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

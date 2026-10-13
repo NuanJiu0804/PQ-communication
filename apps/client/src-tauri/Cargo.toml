@@ -1,0 +1,30 @@
+[package]
+name = "pqchat"
+version = "0.1.0"
+description = "基于后量子混合密码的端到端加密即时通讯系统 —— 桌面客户端"
+authors = []
+edition = "2021"
+rust-version = "1.77"
+
+# 库 + 可执行双产物:后续阶段 crypto-core(PQXDH/双棘轮)与本地加密存储挂在此 lib 内
+[lib]
+name = "pqchat_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+crypto-core = { path = "../crypto-core" }
+base64 = "0.22"
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

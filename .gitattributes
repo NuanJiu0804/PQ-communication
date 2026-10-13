@@ -1,0 +1,19 @@
+# 统一换行符为 LF,保证 Windows 本地开发与 Ubuntu 部署一致
+* text=auto eol=lf
+
+# 二进制文件不做换行符转换
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.icns binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.pdf  binary
+
+# Windows 脚本保持 CRLF
+*.ps1  text eol=crlf
+*.cmd  text eol=crlf
+*.bat  text eol=crlf

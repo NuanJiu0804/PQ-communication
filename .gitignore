@@ -1,0 +1,44 @@
+# ---- 环境与密钥(严禁提交)----
+.env
+.env.local
+*.local
+
+# ---- Node / 前端 ----
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.tsbuildinfo
+
+# ---- Go ----
+/apps/server/server
+/apps/server/server.exe
+/apps/server/bin/
+*.out
+
+# ---- Rust / Tauri ----
+/apps/client/src-tauri/target/
+target/
+**/*.rs.bk
+
+# ---- 客户端生成的图标(由 npm run icons 生成)----
+/apps/client/src-tauri/icons/
+/apps/client/src-tauri/app-icon.png
+
+# ---- 本地数据卷与日志 ----
+*.log
+/data/
+*.sqlite
+*.sqlite3
+*.db
+
+# ---- TLS 证书(本地开发自签,由 go run ./cmd/gencert 生成,严禁提交)----
+/apps/server/certs/
+*.pem
+
+# ---- 编辑器 / 系统 ----
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

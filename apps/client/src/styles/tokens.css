@@ -1,0 +1,68 @@
+/* 设计令牌:对齐 Claude 官网的暖色调(象牙白底 + 赤陶/珊瑚强调色)。
+   组件只引用变量,不写死颜色,保证全局一致。浅色 / 深色双主题。 */
+:root {
+  /* 背景:温暖的象牙/米白 */
+  --bg-base: #f5f4ee;
+  --bg-surface: #fcfbf7;
+  --bg-elevated: #ffffff;
+  /* 边框:暖灰 */
+  --border: #e7e2d6;
+  /* 文本:暖黑 */
+  --text-strong: #1f1d1a;
+  --text: #3a352e;
+  --text-muted: #6f6657;
+  --text-faint: #a39a88;
+  /* 强调:Claude 赤陶橙 */
+  --accent: #c96442;
+  --accent-hover: #ad5230;
+  --accent-soft: #f1e4dc;
+  --success: #5b7f5e;
+  --warning: #b5862a;
+  --danger: #bc4b3c;
+
+  /* 圆角:更柔和、更友好(贴近 Claude) */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* 间距(4px 基准) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* 字体:UI 用干净无衬线;品牌/标题用衬线营造 Claude 式的编辑感 */
+  --font-sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-serif: Georgia, "Times New Roman", "Songti SC", "STSong", serif;
+  --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, "Liberation Mono", monospace;
+
+  /* 阴影:更柔、带暖意 */
+  --shadow-sm: 0 1px 2px rgba(60, 50, 40, 0.06);
+  --shadow-soft: 0 6px 24px rgba(80, 60, 45, 0.10);
+  --shadow-overlay: 0 16px 48px rgba(60, 45, 35, 0.18);
+}
+
+[data-theme="dark"] {
+  /* Claude 暖炭灰深色模式 */
+  --bg-base: #262624;
+  --bg-surface: #30302d;
+  --bg-elevated: #36352f;
+  --border: #423f38;
+  --text-strong: #f5f3ec;
+  --text: #e8e4da;
+  --text-muted: #aaa394;
+  --text-faint: #7a7264;
+  --accent: #d97757;
+  --accent-hover: #e58e70;
+  --accent-soft: #3a302a;
+  --success: #6fa074;
+  --warning: #d9a441;
+  --danger: #e07a6a;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-soft: 0 6px 24px rgba(0, 0, 0, 0.4);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.55);
+}

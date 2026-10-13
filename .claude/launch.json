@@ -1,0 +1,54 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "client",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "apps/client", "run", "dev"],
+      "port": 5173,
+      "autoPort": false
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "apps/admin", "run", "dev"],
+      "port": 5174,
+      "autoPort": false
+    },
+    {
+      "name": "ja4-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "C:/Users/Tangg/Desktop/ja4-detector/frontend",
+        "run",
+        "dev",
+        "--",
+        "C:/Users/Tangg/Desktop/ja4-detector/frontend",
+        "--config",
+        "C:/Users/Tangg/Desktop/ja4-detector/frontend/vite.config.ts",
+        "--port",
+        "5180"
+      ],
+      "port": 5180,
+      "autoPort": false
+    },
+    {
+      "name": "ja4-backend",
+      "runtimeExecutable": "C:/Users/Tangg/Desktop/ja4-detector/backend/.venv/Scripts/python.exe",
+      "runtimeArgs": [
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--app-dir",
+        "C:/Users/Tangg/Desktop/ja4-detector/backend",
+        "--port",
+        "8000",
+        "--log-level",
+        "warning"
+      ],
+      "port": 8000,
+      "autoPort": false
+    }
+  ]
+}

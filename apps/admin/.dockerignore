@@ -1,0 +1,10 @@
+# 管理后台镜像构建上下文裁剪
+node_modules
+dist
+.git
+.gitignore
+*.md
+.env
+.env.*
+Dockerfile
+.dockerignore

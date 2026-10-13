@@ -1,0 +1,3 @@
+-- 回滚 0001:移除扩展
+DROP EXTENSION IF EXISTS pgcrypto;
+DROP EXTENSION IF EXISTS citext;
